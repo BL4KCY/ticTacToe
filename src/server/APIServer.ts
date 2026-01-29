@@ -7,21 +7,26 @@ import { GameManager } from '../game/GameManager';
 export class APIServer {
   private app: express.Application;
   private gameManager: GameManager;
+  private wsPort: number;
 
-  constructor(gameManager: GameManager, port: number = 3000) {
+  constructor(gameManager: GameManager, apiPort: number = 3000, wsPort: number = 8080) {
     this.app = express();
     this.gameManager = gameManager;
+    this.wsPort = wsPort;
     this.setupMiddleware();
     this.setupRoutes();
-    this.start(port);
+    this.start(apiPort);
   }
 
   private setupMiddleware(): void {
     this.app.use(express.json());
     
     // CORS middleware
+    // WARNING: This allows all origins for development. 
+    // In production, restrict this to specific origins.
+    const allowedOrigins = process.env.ALLOWED_ORIGINS || '*';
     this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Origin', allowedOrigins);
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
       res.header('Access-Control-Allow-Headers', 'Content-Type');
       next();
@@ -64,7 +69,7 @@ export class APIServer {
           gameDetails: 'GET /api/games/:gameId'
         },
         websocket: {
-          port: 8080,
+          port: this.wsPort,
           messages: {
             joinGame: 'JOIN_GAME - Join or create a game',
             makeMove: 'MAKE_MOVE - Make a move in the game'

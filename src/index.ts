@@ -13,7 +13,7 @@ function main() {
   
   // HTTP API server for game queries
   const API_PORT = parseInt(process.env.API_PORT || '3000', 10);
-  const apiServer = new APIServer(wsServer.getGameManager(), API_PORT);
+  const apiServer = new APIServer(wsServer.getGameManager(), API_PORT, WS_PORT);
   
   console.log('\n=================================');
   console.log('TicTacToe Backend is running!');

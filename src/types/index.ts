@@ -81,10 +81,40 @@ export enum MessageType {
 }
 
 /**
+ * Payload for join game message
+ */
+export interface JoinGamePayload {
+  gameId?: string;
+  playerName: string;
+}
+
+/**
+ * Payload for make move message
+ */
+export interface MakeMovePayload {
+  row: number;
+  col: number;
+}
+
+/**
+ * Payload for error message
+ */
+export interface ErrorPayload {
+  error: string;
+}
+
+/**
+ * Payload for player left message
+ */
+export interface PlayerLeftPayload {
+  playerId: string;
+}
+
+/**
  * WebSocket message structure
  */
 export interface WSMessage {
   type: MessageType;
-  payload: any;
+  payload: any; // TODO: Use discriminated union for type-safe payloads
   gameId?: string;
 }

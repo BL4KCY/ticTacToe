@@ -14,6 +14,41 @@ import { TicTacToeGame } from './TicTacToeGame';
  */
 export class GameManager {
   private games: Map<string, GameState> = new Map();
+  private cleanupInterval: NodeJS.Timeout;
+  private readonly GAME_EXPIRY_MS = 3600000; // 1 hour
+
+  constructor() {
+    // Cleanup finished games every 5 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupOldGames();
+    }, 300000);
+  }
+
+  /**
+   * Clean up old finished games to prevent memory leaks
+   */
+  private cleanupOldGames(): void {
+    const now = new Date();
+    const gamesToDelete: string[] = [];
+
+    this.games.forEach((game, gameId) => {
+      if (game.status === GameStatus.FINISHED) {
+        const gameAge = now.getTime() - game.updatedAt.getTime();
+        if (gameAge > this.GAME_EXPIRY_MS) {
+          gamesToDelete.push(gameId);
+        }
+      }
+    });
+
+    gamesToDelete.forEach(gameId => {
+      this.games.delete(gameId);
+      console.log(`Cleaned up expired game: ${gameId}`);
+    });
+
+    if (gamesToDelete.length > 0) {
+      console.log(`Cleaned up ${gamesToDelete.length} expired game(s)`);
+    }
+  }
 
   /**
    * Create a new game
@@ -143,6 +178,15 @@ export class GameManager {
    */
   deleteGame(gameId: string): boolean {
     return this.games.delete(gameId);
+  }
+
+  /**
+   * Clean up resources and stop cleanup interval
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
   }
 
   /**

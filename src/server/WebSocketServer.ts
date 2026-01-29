@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { GameManager } from '../game/GameManager';
-import { MessageType, WSMessage, Move } from '../types';
+import { MessageType, WSMessage, Move, GameStatus } from '../types';
 
 interface ClientConnection {
   id: string;
@@ -77,6 +77,17 @@ export class WebSocketServer {
     const client = this.clients.get(clientId);
     if (!client) return;
 
+    // Validate input
+    if (gameId && (typeof gameId !== 'string' || gameId.length > 100)) {
+      this.sendError(clientId, 'Invalid game ID');
+      return;
+    }
+
+    if (playerName && (typeof playerName !== 'string' || playerName.length > 50)) {
+      this.sendError(clientId, 'Invalid player name');
+      return;
+    }
+
     const finalPlayerName = playerName || 'Player';
     client.playerName = finalPlayerName;
 
@@ -118,9 +129,17 @@ export class WebSocketServer {
       return;
     }
 
+    // Validate input
+    const { row, col } = payload;
+    if (typeof row !== 'number' || typeof col !== 'number' || 
+        row < 0 || row > 2 || col < 0 || col > 2) {
+      this.sendError(clientId, 'Invalid move coordinates');
+      return;
+    }
+
     const move: Move = {
-      row: payload.row,
-      col: payload.col,
+      row,
+      col,
       playerId: clientId
     };
 
@@ -139,7 +158,7 @@ export class WebSocketServer {
     });
 
     // If game is over, send game over message
-    if (result.game?.status === 'finished') {
+    if (result.game?.status === GameStatus.FINISHED) {
       this.broadcastToGame(client.gameId, {
         type: MessageType.GAME_OVER,
         payload: {
