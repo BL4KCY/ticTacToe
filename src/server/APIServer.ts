@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import path from 'path';
 import { GameManager } from '../game/GameManager';
 
 /**
@@ -20,7 +21,7 @@ export class APIServer {
 
   private setupMiddleware(): void {
     this.app.use(express.json());
-    
+
     // CORS middleware
     // WARNING: This allows all origins for development. 
     // In production, restrict this to specific origins.
@@ -31,6 +32,9 @@ export class APIServer {
       res.header('Access-Control-Allow-Headers', 'Content-Type');
       next();
     });
+
+    // Serve static files from public directory
+    this.app.use(express.static(path.join(__dirname, '../../public')));
   }
 
   private setupRoutes(): void {
@@ -49,12 +53,12 @@ export class APIServer {
     this.app.get('/api/games/:gameId', (req: Request, res: Response) => {
       const { gameId } = req.params;
       const game = this.gameManager.getGame(gameId);
-      
+
       if (!game) {
         res.status(404).json({ error: 'Game not found' });
         return;
       }
-      
+
       res.json({ game });
     });
 
